@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclinic-app
+spec:
+  type: NodePort
+  selector:
+    app: petclinic-app
+  ports:
+  - port: 8080
+    nodePort: 30080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic-app
+  labels:
+    app: petclinic-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: petclinic-app
+  template:
+    metadata:
+      labels:
+        app: petclinic-app
+    spec:
+      containers:
+      - name: petclinic-app
+        image: jsatapathy/petclinic-app:2.2
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: petclinic-app-config-v2
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: petclinic-app-config-v2
+  namespace: default
+  resourceVersion: "1"
+data:
+  spring.datasource.url: "${MYSQL_URL:jdbc:mysql://mysql-1,mysql/petclinic?failOverReadOnly=false}"
